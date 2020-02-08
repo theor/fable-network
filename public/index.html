@@ -9,5 +9,24 @@
 <body>
     <div id="elmish-app" class="elmish-app"></div>
     <script src="bundle.js"></script>
+    <script>
+    import { connectViaExtension, extractState } from 'remotedev';
+// It will try to use Redux DevTools extension first if installed
+// In case you want only remote monitoring use `connect`:
+// import { connect, extractState } from 'remotedev';
+
+// Connect to the monitor
+remotedev = connectViaExtension();
+
+// Subscribe to change state (if need more than just logging)
+remotedev.subscribe(message => {
+  // Helper when only time travelling needed
+  const state = extractState(message);
+  this.setState(state);
+});
+
+// Send changes to the remote monitor
+remotedev.send(action, state);
+</script>
 </body>
 </html>
