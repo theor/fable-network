@@ -17,8 +17,7 @@ type HostModel = { serverAddress: string
 type ClientModel = { serverAddress: string
                      clientAddress: string
                      session: SessionModel }
-type ClientConnectingModel = { serverAddress: string
-                               clientAddress: string}
+type ClientConnectingModel = { serverAddress: string }
 type Model =
   | Index of IndexModel
   | Host of HostModel
@@ -35,4 +34,5 @@ type Msg =
     | Receive of Counter.Msg
     | Host
     | Connect of string
+    | Connected of string
     | Index of IndexMsg

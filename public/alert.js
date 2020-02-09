@@ -43,19 +43,19 @@ function connect(addr) {
     console.log("message from", address, "is", message);
     dispatch(message)
   });
-  // wait until we see the server
-  // (can take a minute to tunnel through firewalls etc.)
-  bugoutInstance.on("server", function (address) {
-    bugoutInstance.heartbeat(500);
-    bugoutInstance.rpc("ping", { "hello": "world" }, function (result) {
-      console.log(result);
-      // also check result.error
-    });
-  });
-
   // save this client instance's session key seed to re-use
   localStorage["bugout-seed"] = JSON.stringify(bugoutInstance.seed);
-  return bugoutInstance.address();
+
+  return new Promise(function(resolve, reject) {
+    bugoutInstance.once("server", function (address) {
+      bugoutInstance.heartbeat(500);
+      bugoutInstance.rpc("ping", { "hello": "world" }, function (result) {
+        console.log(result);
+        resolve(bugoutInstance.address());
+        // also check result.error
+      });
+    });
+  });
 }
 
 function send(message) {
