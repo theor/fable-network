@@ -13,13 +13,13 @@ open Elmish.Navigation
 // MODEL
 open App.Types
 open Browser.Types
-open Fable.React
 
 // UPDATE
 
 let updateIndex (msg: IndexMsg) (model: IndexModel): IndexModel * Cmd<IndexMsg> =
     match msg with
     | ChangeAddress newAddr -> { model with connectAddress = newAddr }, Cmd.none
+
 let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     Fable.Core.JS.console.error ("update", msg)
     match msg with
@@ -47,12 +47,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
         let m,c = updateIndex indexMsg indexModel
         Model.Index m, Cmd.map Msg.Index c
         
-// | First(m) -> (Counter.update m (fst model), (snd model))
-// | Second(m) -> ((fst model), Counter.update m (snd model))
-// | Networked(m) ->
-// | Second(m) -> model - 1
-
-// VIEW (rendered with React)
+// VIEW
 
 let view (model: Model) (dispatch: Msg -> unit) =
     let indexLink = div [] [ a [ App.Router.href Route.Index ] [ Helpers.str "Index" ] ]
@@ -81,9 +76,6 @@ let view (model: Model) (dispatch: Msg -> unit) =
         Helpers.str (sprintf "server %s" client.serverAddress)
         div [] [ Counter.view client.session.counter (Send >> dispatch) ]
     ]
-//    div []
-//        // [ Counter.view (fst model) (fun m -> dispatch(First(m)))
-//        [ Counter.view model.model (Send >> dispatch) ]
 
 let sub (m: Model): Cmd<Msg> =
     let sub (dispatch: Msg -> unit) =
@@ -95,14 +87,6 @@ let sub (m: Model): Cmd<Msg> =
 
 let init route: Model * Cmd<Msg> =
     printfn "INIT"
-//    match route with
-//    | None -> Model.Empty, Cmd.none
-//    | Some r ->
-//        let cmd = match r with
-//                  | Route.Index -> Cmd.none
-//                  | Route.Hosting -> Cmd.ofMsg Host
-//                  | Route.Join addr -> Connect addr |> Cmd.ofMsg
-//        Model.Empty, cmd
     App.Router.urlUpdate route Model.Empty
 
 // App
