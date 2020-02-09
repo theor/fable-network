@@ -12,6 +12,8 @@ open Elmish.Navigation
 
 // MODEL
 open App.Types
+open Browser.Types
+open Fable.React
 
 // UPDATE
 
@@ -30,6 +32,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
         let clientAddr = App.Interop.Interop.instance.connect(addr)
         eprintfn "F# client addr %s" clientAddr
         { model with route = Route.Join addr }, App.Router.newUrl (Route.Join addr)
+    | ChangeAddress newAddr -> { model with connectAddress = newAddr }, Cmd.none
         
         
 // | First(m) -> (Counter.update m (fst model), (snd model))
@@ -40,18 +43,26 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
 // VIEW (rendered with React)
 
 let view (model: Model) (dispatch: Msg -> unit) =
+    let indexLink = div [] [ a [ App.Router.href Route.Index ] [ Helpers.str "Index" ] ]
     printfn "VIEW %O" model
     match model.route with
     | Index -> div [] [
             button [ OnClick (fun _ -> dispatch Host) ] [ Helpers.str "Host" ]
             div [] [
                 label [] [ Helpers.str "Server address" ]
-                input [  ]
-                button [ OnClick (fun _ -> dispatch (Connect "asd")) ] [ Helpers.str "Connect" ]
+                input [ Value model.connectAddress
+                        OnChange (fun ev -> ChangeAddress ((ev.target :?> HTMLInputElement).value) |> dispatch)
+                ]
+                button [ OnClick (fun _ -> dispatch (Connect model.connectAddress)) ] [ Helpers.str "Connect" ]
             ]
         ]
+    | Hosting -> div [] [
+            indexLink
+            label [] [ Helpers.str "Join address:" ]
+            a [ Route.Join "asd" |> App.Router.href ] [ Helpers.str "Index" ]
+        ]
     | _ -> div [] [
-        a [ App.Router.href Route.Index ] [ Helpers.str "Index" ]
+        indexLink
         Helpers.str (string model.route)
     ]
 //    div []
@@ -72,7 +83,8 @@ let init route: Model * Cmd<Msg> =
     | None -> Model.Empty, Cmd.none
     | Some r ->
         let cmd = match r with
-                  | Route.Index | Route.Hosting -> Cmd.none
+                  | Route.Index -> Cmd.none
+                  | Route.Hosting -> Cmd.ofMsg Host
                   | Route.Join addr -> Connect addr |> Cmd.ofMsg
         { Model.Empty with route = r }, cmd
 //    App.Router.urlUpdate route Model.Empty

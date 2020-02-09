@@ -7,8 +7,11 @@ type Route =
 
 type Model = 
   { route: Route
+    connectAddress: string
     model: Counter.Model }
-  static member Empty = { route=Index; model = 0 }
+  static member Empty = { route=Index
+                          connectAddress = ""
+                          model = 0 }
   
   
 type Msg =
@@ -17,3 +20,4 @@ type Msg =
     | Receive of Counter.Msg
     | Host
     | Connect of string
+    | ChangeAddress of string
