@@ -72,7 +72,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
 let sub (m: Model): Cmd<Msg> =
     let sub (dispatch: Msg -> unit) =
         let transmit msg = dispatch (Receive msg)
-        transmit |> App.Interop.Interop.instance.callback
+        transmit |> App.Interop.Interop.instance.subscribe
     Cmd.ofSub sub
 
 
