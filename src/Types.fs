@@ -17,10 +17,12 @@ type HostModel = { serverAddress: string
 type ClientModel = { serverAddress: string
                      clientAddress: string
                      session: SessionModel }
-
+type ClientConnectingModel = { serverAddress: string
+                               clientAddress: string}
 type Model =
   | Index of IndexModel
   | Host of HostModel
+  | ClientConnecting of ClientConnectingModel
   | Client of ClientModel
   static member Empty = Index { connectAddress= "" }
   

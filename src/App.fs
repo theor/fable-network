@@ -40,7 +40,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     | Connect serverAddress ->
         let clientAddr = App.Interop.Interop.instance.connect(serverAddress)
         eprintfn "F# client addr %s" clientAddr
-        Model.Client {  serverAddress = serverAddress; clientAddress = clientAddr; session=SessionModel.Empty },
+        Model.ClientConnecting {  serverAddress = serverAddress; clientAddress = clientAddr; },
         App.Router.modifyUrl (Route.Join serverAddress)
     | Index indexMsg ->
         let (Model.Index(indexModel)) = model
@@ -69,13 +69,19 @@ let view (model: Model) (dispatch: Msg -> unit) =
             a [ Route.Join host.serverAddress |> App.Router.href ] [ Helpers.str "host.serverAddress" ]
             div [] [ Counter.view host.session.counter (Send >> dispatch) ]
         ]
+    | Model.ClientConnecting client -> div [] [
+            indexLink
+            Helpers.str (sprintf "Client %s" client.clientAddress)
+            br []
+            Helpers.str (sprintf "Connecting to %s ..." client.serverAddress)
+        ]
     | Model.Client client -> div [] [
-        indexLink
-        Helpers.str (sprintf "JOINING %s" client.clientAddress)
-        br []
-        Helpers.str (sprintf "server %s" client.serverAddress)
-        div [] [ Counter.view client.session.counter (Send >> dispatch) ]
-    ]
+            indexLink
+            Helpers.str (sprintf "Client %s" client.clientAddress)
+            br []
+            Helpers.str (sprintf "Connected to server %s" client.serverAddress)
+            div [] [ Counter.view client.session.counter (Send >> dispatch) ]
+        ]
 
 let sub (m: Model): Cmd<Msg> =
     let sub (dispatch: Msg -> unit) =
