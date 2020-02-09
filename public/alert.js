@@ -1,6 +1,6 @@
 
 localStorage.debug = null;// "bugout";
-localStorage.debug = "bugout";
+// localStorage.debug = "bugout";
 
 var dispatch;
 function subscribe(dispatchFunction) {
@@ -14,6 +14,7 @@ function host() {
   localStorage["bugout-server-seed"] = bugoutInstance.seed;
   let addr = bugoutInstance.address();
   console.log("hosting, address:", addr);
+
   bugoutInstance.register("ping", function (address, args, callback) {
     // modify the passed arguments and reply
     console.log("ping from ", address);
@@ -27,11 +28,21 @@ function host() {
   bugoutInstance.on("left", function (address) {
     console.log("left", address);
   });
+
+  
+  bugoutInstance.on("message", function(address, message) {
+    console.log("message from", address, "is", message);
+    dispatch(message)
+  });
   return addr;
 }
 
 function connect(addr) {
   bugoutInstance = new Bugout(addr);
+  bugoutInstance.on("message", function(address, message) {
+    console.log("message from", address, "is", message);
+    dispatch(message)
+  });
   // wait until we see the server
   // (can take a minute to tunnel through firewalls etc.)
   bugoutInstance.on("server", function (address) {
@@ -45,6 +56,14 @@ function connect(addr) {
   // save this client instance's session key seed to re-use
   localStorage["bugout-seed"] = JSON.stringify(bugoutInstance.seed);
   return bugoutInstance.address();
+}
+
+function send(message) {
+  // toJSON strips the F# union fields (tag:1, fields=[], ...) and breaks the deserialization
+  message.toJSON = undefined;
+  console.log("sending", message);
+  // b.rpc("ping", {"Hello": "world"}, x => console.log("response:", x));
+  bugoutInstance.send(message);
 }
 
 
@@ -73,13 +92,5 @@ function connect(addr) {
 //   console.log("message from", address, "is", message);
 //   dispatch(message)
 // });
-
-function send(message) {
-  // toJSON strips the F# union fields (tag:1, fields=[], ...) and breaks the deserialization
-  message.toJSON = undefined;
-  console.log("sending", message);
-  // b.rpc("ping", {"Hello": "world"}, x => console.log("response:", x));
-  // b.send(message);
-}
 
 export { host, connect, send, subscribe };

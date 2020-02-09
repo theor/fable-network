@@ -10,13 +10,13 @@ open App.Types
 
 let route: Parser<Route -> Route, Route> =
     oneOf
-        [ map Index top
+        [ map Route.Index top
           map Hosting (s "host")
           map Join (s "join" </> str) ]
         
 let private toHash page =
     match page with
-    | Index -> "#/"
+    | Route.Index -> "#/"
     | Hosting -> "#host"
     | Join s -> sprintf "#join/%s" s
         
@@ -35,7 +35,7 @@ let modifyLocation route =
 let urlUpdate (result: Option<Route>) model =
   printfn "url %O" result
   match result with
-  | Some Index -> {model with route = Index}, Cmd.none
-  | Some Hosting -> {model with route = Hosting}, Cmd.none
-  | Some (Join addr) -> {model with route = (Join addr)}, Cmd.none//, Cmd.ofMsg (Msg.Connect addr)
-  | None -> ({model with route = Index}, Navigation.modifyUrl "#")
+  | Some Route.Index -> Model.Empty, Cmd.none
+  | Some Hosting -> Model.Empty, Cmd.ofMsg Msg.Host
+  | Some (Join addr) -> Model.Empty, Cmd.ofMsg (Msg.Connect addr)
+  | None -> Model.Empty, Navigation.modifyUrl "#"
