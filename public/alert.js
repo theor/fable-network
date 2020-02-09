@@ -1,48 +1,81 @@
-var dispatch;
+
+localStorage.debug = null;// "bugout";
+
+// var dispatch;
 function callback(f) {
   console.log("callback", f);
-  dispatch = f;
+  // dispatch = f;
+}
+var bugoutInstance = null;
+
+function host() {
+  bugoutInstance = new Bugout({seed:localStorage["bugout-server-seed"]});
+  localStorage["bugout-server-seed"] = bugoutInstance.seed;
+  let addr = bugoutInstance.address();
+  console.log("hosting, address:", addr);
+  bugoutInstance.register("ping", function(address, args, callback) {
+    // modify the passed arguments and reply
+    console.log("ping from ", address);
+    args.hello = "Hello from " + bugoutInstance.address();
+    callback(args);
+  });
+  return addr;
+}
+
+function connect(addr) {
+  bugoutInstance = new Bugout(addr);
+  // wait until we see the server
+  // (can take a minute to tunnel through firewalls etc.)
+  bugoutInstance.on("server", function (address) {
+    bugoutInstance.rpc("ping", { "hello": "world" }, function (result) {
+      console.log(result);
+      // also check result.error
+    });
+  });
+
+  // save this client instance's session key seed to re-use
+  localStorage["bugout-seed"] = JSON.stringify(bugoutInstance.seed);
+  return bugoutInstance.address();
 }
 
 
-const someString = "And I Like that!";
-localStorage.debug = null;// "bugout";
-
 // var Bugout = require("bugout");
-var b = new Bugout("test");
-console.log(b.address());
+// var b = new Bugout("test");
+// console.log(b.address());
+// b.heartbeat(500);
 
-b.on("server", function(address) {
-  console.log("server", address);
-  // once we can see the server
-  // make an API call on it
-  b.rpc("ping", {"hello": "world"}, function(result) {
-    console.log(result);
-    // {"hello": "world", "pong": true}
-    // also check result.error
-  });
-});
+// b.register("asd", function(address, args, cb) {
+//   args["pong"] = Math.random();
+//   cb(args);
+// });
 
-b.on("seen", function(address) {
-  console.log("seen", address);
-});
+// b.on("timeout", function(address) {
+//   console.log("timeout", address);
+// });
+// b.on("left", function(address) {
+//   console.log("left", address);
+// });
+// // b.on("ping", function(address) {
+// //   console.log("ping", address);
+// // });
 
-// receive all out-of-band messages from the server
-// or from any other another connected client
-b.on("message", function(address, message) {
-  console.log("message from", address, "is", message);
-  dispatch(message)
-});
+// b.on("seen", function(address) {
+//   console.log("seen", address, address == b.address() ? "Me" : "Not me");
+// });
 
-// setTimeout(function() {
-//   b.send({"AAAA":"BBBB"});
-// }, 5000);
+// // receive all out-of-band messages from the server
+// // or from any other another connected client
+// b.on("message", function(address, message) {
+//   console.log("message from", address, "is", message);
+//   dispatch(message)
+// });
 
 function send(message) {
   // toJSON strips the F# union fields (tag:1, fields=[], ...) and breaks the deserialization
   message.toJSON = undefined;
   console.log("sending", message);
-  b.send(message);
+  // b.rpc("ping", {"Hello": "world"}, x => console.log("response:", x));
+  // b.send(message);
 }
 
-export { send, callback, someString };
+export { host, connect, send, callback };
