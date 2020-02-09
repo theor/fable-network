@@ -38,11 +38,9 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
         Model.Host { serverAddress = serverAddress; session= SessionModel.Empty },
         App.Router.modifyUrl Route.Hosting
     | Connect serverAddress ->
-//        let clientAddr = App.Interop.Interop.instance.connect(serverAddress)
         Model.ClientConnecting { serverAddress = serverAddress },
-        Cmd.OfPromise.perform App.Interop.Interop.instance.connect serverAddress Msg.Connected
-//        App.Router.modifyUrl (Route.Join serverAddress)
-    | Connected clientAddress ->
+        Cmd.batch [ App.Router.modifyUrl (Route.Join serverAddress)
+                    Cmd.OfPromise.perform App.Interop.Interop.instance.connect serverAddress Msg.Connected ]
         eprintfn "F# client addr %s" clientAddress
         let (Model.ClientConnecting connecting) = model 
         Model.Client { serverAddress = connecting.serverAddress; clientAddress = clientAddress; session = SessionModel.Empty }, Cmd.none
