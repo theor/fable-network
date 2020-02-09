@@ -27,12 +27,14 @@ type Model =
   
   
 type IndexMsg =  ChangeAddress of string
-  
+ 
+
+type Connection = { clientAddr: string
+                    snapshot: Counter.Model } 
 type Msg =
-    // | First of Counter.Msg
     | Send of Counter.Msg
     | Receive of Counter.Msg
     | Host
     | Connect of string
-    | Connected of string
+    | Connected of Connection
     | Index of IndexMsg

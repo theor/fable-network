@@ -15,7 +15,7 @@ open App.Types
 open Browser.Types
 
 // UPDATE
-
+Fable.Core.JS.console.log((1,2))
 let updateIndex (msg: IndexMsg) (model: IndexModel): IndexModel * Cmd<IndexMsg> =
     match msg with
     | ChangeAddress newAddr -> { model with connectAddress = newAddr }, Cmd.none
@@ -29,21 +29,26 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     | Receive(m) ->
         let model = match model with
                     | Client c -> Client { c with session = { c.session with counter = Counter.update m c.session.counter } }  
-                    | Model.Host c -> Model.Host { c with session = { c.session with counter = Counter.update m c.session.counter } }
+                    | Model.Host c ->
+                        let session = { c.session with counter = Counter.update m c.session.counter }
+                        App.Interop.Interop.instance.saveSnapshot session.counter
+                        Model.Host { c with session = session }
                     | _ -> failwith "Not possible"
         model, Cmd.none
     | Host ->
         let serverAddress = App.Interop.Interop.instance.host()
         printfn "F# host addr %s" serverAddress
-        Model.Host { serverAddress = serverAddress; session= SessionModel.Empty },
-        App.Router.modifyUrl Route.Hosting
+        let m = Model.Host { serverAddress = serverAddress; session= SessionModel.Empty }
+        Counter.init () |> App.Interop.Interop.instance.saveSnapshot
+        m, App.Router.modifyUrl Route.Hosting
     | Connect serverAddress ->
         Model.ClientConnecting { serverAddress = serverAddress },
         Cmd.batch [ App.Router.modifyUrl (Route.Join serverAddress)
                     Cmd.OfPromise.perform App.Interop.Interop.instance.connect serverAddress Msg.Connected ]
-        eprintfn "F# client addr %s" clientAddress
+    | Connected({clientAddr = clientAddr; snapshot=snapshot}) ->
+        eprintfn "F# client addr %s snapshot %O" clientAddr snapshot
         let (Model.ClientConnecting connecting) = model 
-        Model.Client { serverAddress = connecting.serverAddress; clientAddress = clientAddress; session = SessionModel.Empty }, Cmd.none
+        Model.Client { serverAddress = connecting.serverAddress; clientAddress = clientAddr; session = { SessionModel.Empty with counter = snapshot } }, Cmd.none
 //        App.Router.modifyUrl (Route.Join serverAddress)
     | Index indexMsg ->
         let (Model.Index(indexModel)) = model
@@ -69,7 +74,7 @@ let view (model: Model) (dispatch: Msg -> unit) =
     | Model.Host host -> div [] [
             indexLink
             label [] [ Helpers.str "HOSTING Join address:" ]
-            a [ Route.Join host.serverAddress |> App.Router.href ] [ Helpers.str "host.serverAddress" ]
+            a [ Route.Join host.serverAddress |> App.Router.href ] [ Helpers.str host.serverAddress ]
             div [] [ Counter.view host.session.counter (Send >> dispatch) ]
         ]
     | Model.ClientConnecting client -> div [] [

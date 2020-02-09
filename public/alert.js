@@ -2,11 +2,18 @@
 localStorage.debug = null;// "bugout";
 // localStorage.debug = "bugout";
 
-var dispatch;
+var dispatch = null;
 function subscribe(dispatchFunction) {
   console.log("callback", dispatchFunction);
   dispatch = dispatchFunction;
 }
+
+var lastSnapshot = null;
+function saveSnapshot(snapshot){
+  console.log("save", snapshot);
+  lastSnapshot = snapshot;
+}
+
 var bugoutInstance = null;
 
 function host() {
@@ -17,9 +24,10 @@ function host() {
 
   bugoutInstance.register("ping", function (address, args, callback) {
     // modify the passed arguments and reply
-    console.log("ping from ", address);
-    args.hello = "Hello from " + bugoutInstance.address();
-    callback(args);
+    console.log("ping from ", address, lastSnapshot);
+    // args.hello = "Hello from " + bugoutInstance.address();
+    
+    callback({snapshot: lastSnapshot});
   });
 
   bugoutInstance.on("timeout", function (address) {
@@ -50,8 +58,8 @@ function connect(addr) {
     bugoutInstance.once("server", function (address) {
       bugoutInstance.heartbeat(500);
       bugoutInstance.rpc("ping", { "hello": "world" }, function (result) {
-        console.log(result);
-        resolve(bugoutInstance.address());
+        console.log("snapshot:", result);
+        resolve({snapshot: result.snapshot, clientAddr:bugoutInstance.address()});
         // also check result.error
       });
     });
@@ -93,4 +101,4 @@ function send(message) {
 //   dispatch(message)
 // });
 
-export { host, connect, send, subscribe };
+export { host, connect, send, subscribe, saveSnapshot };

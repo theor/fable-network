@@ -12,6 +12,7 @@ type Model = int
 type Msg =
 | Increment
 | Decrement
+| Sync of Model
 
 let init() : Model = 0
 
@@ -21,6 +22,7 @@ let update (msg:Msg) (model:Model) =
     match msg with
     | Increment -> model + 1
     | Decrement -> model - 1
+    | Sync snapshot -> snapshot
 
 // VIEW (rendered with React)
 
